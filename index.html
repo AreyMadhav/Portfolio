@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AreyPortfolio</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Share Tech Mono', monospace;
+        }
+        body {
+            background-color: #f0f0f0;
+            color: #1a1a1a;
+        }
+        .terminal {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            animation: pulse 2s infinite alternate;
+        }
+        .dark-mode {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .dark-mode .terminal {
+            background-color: rgba(26, 26, 26, 0.9);
+        }
+        @keyframes pulse {
+            from {
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            }
+            to {
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 0, 0, 0.2);
+            }
+        }
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .command-input {
+            background: transparent;
+            caret-color: #1a1a1a;
+        }
+        .dark-mode .command-input {
+            caret-color: #f0f0f0;
+        }
+        .command-input:focus {
+            outline: none;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        .dark-mode ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+        .dark-mode ::-webkit-scrollbar-thumb {
+            background: #f0f0f0;
+        }
+        .output-line {
+            transition: all 0.3s ease;
+        }
+        .output-line:hover {
+            transform: translateX(10px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="terminal h-screen max-w-5xl mx-auto p-6 rounded-lg overflow-hidden flex flex-col">
+        <div class="flex items-center mb-4 border-b border-gray-300 pb-2">
+            <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <span class="ml-4 text-sm">AreyMadhavShell v2.0</span>
+        </div>
+        <div id="output" class="flex-grow overflow-y-auto mb-4 text-lg"></div>
+        <div class="flex items-center border-t border-gray-300 pt-4">
+            <span class="text-xl mr-2">$</span>
+            <input type="text" id="commandInput" class="command-input w-full text-xl px-2" placeholder="Type 'help' to begin..." autofocus>
+        </div>
+    </div>
+
+    <script>
+        const terminal = {
+            init() {
+                this.outputEl = document.getElementById('output');
+                this.inputEl = document.getElementById('commandInput');
+                this.setupEventListeners();
+                this.printWelcome();
+                this.commandHistory = [];
+                this.historyIndex = -1;
+            },
+
+            commands: {
+                help: () => `Available commands:
+• help - Show this help message
+• about - About me
+• projects - View my projects
+• contact - Contact information
+• skills - My technical skills
+• clear - Clear the terminal
+• home - Return to welcome screen
+• github - Visit my GitHub profile
+• social - View social media links
+• theme - Toggle between light and dark mode`,
+                theme: () => {
+                    document.body.classList.toggle('dark-mode');
+                    return 'Theme switched!';
+                },
+                about: () => `About Me:
+──────────────────────────────
+I'm a BCA student specializing in Cybersecurity. 
+A Cybersecurity Research Enthusiast and part-time 
+Game Developer. Passionate about solving security 
+challenges and creating engaging gaming experiences.
+
+🎓 BCA Cybersecurity Specialization
+🌱 Exploring Quantum Cryptography
+🎮 Building immersive games
+🎯 Focused on online security innovation`,
+                projects: () => `Featured Projects:
+──────────────────────────────
+1. KnoxGuard
+   • Browser extension to enhance online security
+   • Automatically scans websites for threats
+
+2. TermSim
+   • C++ shell simulation
+   • Mimics terminal functionalities interactively
+
+3. AutoTyper
+   • Automates text input for efficiency
+   • Operates stealthily without detection
+
+4. QuantumTraining Repository
+   • Session on Quantum Cryptography in Python
+   • Focus on implementing secure communication`,
+                contact: () => `Contact Information:
+──────────────────────────────
+📧 Email: xibmadhavtyagi@gmail.com
+🌐 Portfolio: yourportfolio.com
+📍 Location: India`,
+                skills: () => `Technical Skills:
+──────────────────────────────
+C++ UnrealEngine Python Shell Scripting Microsoft Azure
+Digital Forensics Systems Engineering Incident Response
+Endpoint Security Threat Analysis Network Security
+VPN Firewall Splunk IDS Troubleshooting Collaboration`,
+                clear: () => {
+                    terminal.outputEl.innerHTML = '';
+                    return '';
+                },
+                home: () => terminal.getWelcomeMessage(),
+                github: () => {
+                    window.open('https://github.com/AreyMadhav', '_blank');
+                    return 'Opening GitHub profile...';
+                },
+                social: () => `Social Media:
+──────────────────────────────
+• LinkedIn: https://www.linkedin.com/in/madhav-tyagi-gamer
+• Twitter: @MadhavWasTaken
+• Instagram: @areymadhav
+• YouTube: youtube.com/c/@areymadhav`
+            },
+
+            setupEventListeners() {
+                this.inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const command = this.inputEl.value.trim().toLowerCase();
+                        this.executeCommand(command);
+                        this.commandHistory.push(command);
+                        this.historyIndex = this.commandHistory.length;
+                        this.inputEl.value = '';
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (this.historyIndex > 0) {
+                            this.historyIndex--;
+                            this.inputEl.value = this.commandHistory[this.historyIndex];
+                        }
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (this.historyIndex < this.commandHistory.length - 1) {
+                            this.historyIndex++;
+                            this.inputEl.value = this.commandHistory[this.historyIndex];
+                        } else {
+                            this.historyIndex = this.commandHistory.length;
+                            this.inputEl.value = '';
+                        }
+                    }
+                });
+            },
+
+            getWelcomeMessage() {
+                return `
+╔══════════════════════════════════════════════════════╗
+║                AreyMadhav CyberPortfolio v2.0                ║
+╚══════════════════════════════════════════════════════╝
+
+Welcome! I'm a BCA Student specializing in Cybersecurity.
+Type 'help' to see available commands.
+
+© ${new Date().getFullYear()}  Portfolio`;
+            },
+
+            printWelcome() {
+                this.print(this.getWelcomeMessage());
+            },
+
+            print(text) {
+                const output = document.createElement('div');
+                output.className = 'output-line mb-2';
+                output.innerText = text;
+                this.outputEl.appendChild(output);
+                this.outputEl.scrollTop = this.outputEl.scrollHeight;
+            },
+
+            executeCommand(command) {
+                this.print(`$ ${command}`);
+                
+                if (command === '') {
+                    return;
+                }
+
+                if (this.commands[command]) {
+                    const output = this.commands[command]();
+                    this.print(output);
+                } else {
+                    this.print(`Command not found: '${command}'`);
+                    this.print("Type 'help' for available commands");
+                }
+            }
+        };
+
+        terminal.init();
+    </script>
+</body>
+</html>
